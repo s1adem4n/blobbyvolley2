@@ -1,13 +1,24 @@
 name: Vcpkg
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch: {}
 
 jobs:
   Build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Build
+      - uses: actions/checkout@v3
+      - name: Configure
         run: |
-          cmake -B . -S . -DCMAKE_TOOLCHAIN_FILE="c:/vcpkg/scripts/buildsystems/vcpkg.cmake"
-          cmake --build . 
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="c:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Install to artifacts folder
+        run: cmake --install build --prefix build_artifacts --config Release
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-results
+          path: build_artifacts/**
