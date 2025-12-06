@@ -94,8 +94,14 @@ bool Sound::done() const {
 	return position >= length;
 }
 
+Sound::Sound(const Uint8* data_, int length_, float volume_, bool loop_) :
+	data(data_), length(length_), volume(clip_volume(volume_)), loop(loop_)
+{
+}
+
+// Backwards-compatible 3-arg constructor delegates to the 4-arg version
 Sound::Sound(const Uint8* data_, int length_, float volume_) :
-	data(data_), length(length_), volume(clip_volume(volume_))
+	Sound(data_, length_, volume_, false)
 {
 }
 
@@ -136,7 +142,7 @@ std::vector<Uint8> SoundManager::loadSound(const std::string& filename) const
 	}
 }
 
-bool SoundManager::playSound(const std::string& filename, float volume)
+bool SoundManager::playSound(const std::string& filename, float volume, bool loop)
 {
 	if (mAudioDevice == 0)
 		return false;
@@ -155,7 +161,7 @@ bool SoundManager::playSound(const std::string& filename, float volume)
 		}
 		const auto& buffer = cached_sound->second;
 		SDL_LockAudioDevice(mAudioDevice);
-		mPlayingSound.emplace_back(buffer.data(), buffer.size(), volume);
+		mPlayingSound.emplace_back(buffer.data(), buffer.size(), volume, loop);
 		SDL_UnlockAudioDevice(mAudioDevice);
 	}
 	catch (const FileLoadException& exception)
@@ -177,12 +183,37 @@ void SoundManager::handleCallback(Uint8* stream, int length) {
 
 	for (auto& sound : mPlayingSound)
 	{
-		auto start = sound.getCurrentSample();
-		auto avail = sound.advance(length);
-		SDL_MixAudioFormat(stream, start, mAudioSpec.format, avail, int(volume * sound.volume));
+		int remaining = length;
+		int stream_offset = 0;
+
+		while (remaining > 0 && (!sound.done() || sound.loop))
+		{
+			const Uint8* start = sound.getCurrentSample();
+			int avail = sound.length - sound.position;
+			if (avail <= 0)
+			{
+				if (sound.loop)
+				{
+					sound.position = 0;
+					continue;
+				}
+				else
+					break;
+			}
+
+			int chunk = std::min(avail, remaining);
+			SDL_MixAudioFormat(stream + stream_offset, start, mAudioSpec.format, chunk, int(volume * sound.volume));
+			sound.advance(chunk);
+			remaining -= chunk;
+			stream_offset += chunk;
+
+			if (sound.done() && sound.loop)
+				sound.position = 0;
+		}
 	}
+
 	auto new_end = std::remove_if(begin(mPlayingSound), end(mPlayingSound), [](const Sound& sound) {
-		return sound.done();
+		return sound.done() && !sound.loop;
 	});
 	mPlayingSound.erase(new_end, mPlayingSound.end());
 }

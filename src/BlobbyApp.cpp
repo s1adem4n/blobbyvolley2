@@ -80,6 +80,9 @@ BlobbyApp::BlobbyApp(std::unique_ptr<State> initState, const IUserConfigReader& 
 	/// \todo play sound is misleading. what we actually want to do is load the sound
 	mSoundManager->playSound(SoundManager::IMPACT, 0.0);
 	mSoundManager->playSound(SoundManager::WHISTLE, 0.0);
+	// Play looping background soundtrack if present in data/sounds/
+	// Place your file at data/sounds/soundtrack.wav (or repo-relative "sounds/soundtrack.wav")
+	mSoundManager->playSound("sounds/soundtrack.wav", 1.0f, true);
 
 	mIMGUI.reset(new IMGUI(mInputMgr.get()));
 	mIMGUI->setTextMgr(config.getString("language"));

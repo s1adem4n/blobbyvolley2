@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 struct Sound : public ObjectCounter<Sound>
 {
 	Sound(const Uint8* data_, int length_, float volume_);
+	Sound(const Uint8* data_, int length_, float volume_, bool loop_ = false);
 
 	const Uint8* getCurrentSample() const;
 	int advance(int amount);
@@ -44,6 +45,7 @@ struct Sound : public ObjectCounter<Sound>
 	int length = 0;
 	int position = 0;
 	float volume = 1.f;
+	bool loop = false;
 };
 
 /*! \class SoundManager
@@ -57,7 +59,7 @@ class SoundManager : public ObjectCounter<SoundManager>
 		explicit SoundManager();
 		~SoundManager();
 
-		bool playSound(const std::string& filename, float volume);
+		bool playSound(const std::string& filename, float volume, bool loop = false);
 		void setVolume(float volume);
 		void setMute(bool mute);
 
