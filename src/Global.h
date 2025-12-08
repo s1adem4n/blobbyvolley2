@@ -57,7 +57,7 @@ const char AppTitle[] = "Blobby Volley 2 Version 1.1.1";
 const int BASE_RESOLUTION_X = 800;
 const int BASE_RESOLUTION_Y = 600;
 
-const float ROUND_START_SOUND_VOLUME = 0.2;
+const float ROUND_START_SOUND_VOLUME = 0.6;
 const float BALL_HIT_PLAYER_SOUND_VOLUME = 0.4;
 
 // max. 1 ms additional latency, but much improved performance
